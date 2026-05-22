@@ -14,14 +14,30 @@ USER INTERFACE OF WEB APP
 
 ![alt text](user_interface2.png)
 
-RESULT OF THE PPREDICTION 
+🚗 Prediction Result
 
 ![alt text](result.png)
 
-VISUALISATION
+Visualisation of prediction result
 
 ![alt text](visual.png)
 
-Explainable AI
+🧠 Explainable AI
 
 ![alt text](xai.png)
+
+⚡What-If AI Analysis
+In this user can analyse the prediction by udating the weight of vehicle and then predict the fuel efficiency.
+
+![alt text](image.png)
+
+🌱 Sustainability Analysis
+
+![alt text](image-1.png)
+
+⚙ Settings
+![alt text](image-2.png)
+
+History 
+
+![alt text](image-3.png)
