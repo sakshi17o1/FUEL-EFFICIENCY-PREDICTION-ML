@@ -1,9 +1,10 @@
+import pandas as pd
 import streamlit as st
 import numpy as np
 import joblib
 
-rf = joblib.load("models/rf_model.pkl")
-xgb = joblib.load("models/xgb_model.pkl")
+model_config  = joblib.load("models/model_config.pkl")
+scaler_config = joblib.load("models/scaler_config.pkl")
 
 cyl = st.session_state.get("cyl")
 disp = st.session_state.get("disp")
@@ -26,22 +27,26 @@ new_weight = st.slider("Change Weight",1500.0,6000.0,float(weight),step=50.0)
 
 if st.button("🔮Simulate Fuel Efficiency"):
 
-    data = np.array([[cyl, disp, hp, new_weight, acc, year,
-                    hp/new_weight,
-                    82-year,
-                    hp/cyl]])
+    config_features = [
+    "cylinders", "displacement", "horsepower",
+    "weight", "model-year",
+    "power_to_weight", "car_age", "hp_per_cylinder"
+]
 
-    rf_pred = rf.predict(data)
-    xgb_pred = xgb.predict(data)
+    input_df = pd.DataFrame([[
+        cyl, disp, hp, new_weight,
+        year,
+        hp / new_weight,
+        2026 - year,
+        hp / cyl
+    ]], columns=config_features)
 
-    new_mpg = (0.6*rf_pred + 0.4*xgb_pred)[0]
+    input_scaled = scaler_config.transform(input_df)
+    new_mpg      = model_config.predict(input_scaled)[0]
 
-    st.write("New Predicted MPG:", round(new_mpg,2))
-    
-    # Convert MPG to KM/L
-    new_kmpl = new_mpg * 0.425144
-
-    st.write("New Predicted KM/L:", round(new_kmpl,2))
+    new_kmpl = new_mpg * 0.4251
+    st.write("New Predicted MPG :", round(new_mpg, 2))
+    st.write("New Predicted KMPL:", round(new_kmpl, 2))
 
 
 st.markdown("""

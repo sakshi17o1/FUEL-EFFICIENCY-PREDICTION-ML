@@ -9,20 +9,27 @@ from database import create_tables, save_prediction
 
 create_tables()
 
-# load dataset
-cars = pd.read_csv("data/processed_auto_mpg.csv")
-# Create brand and model columns (since Auto MPG has 'car name')
-cars["brand"] = cars["brand"].apply(lambda x: x.split()[0])
-cars["model"] = cars["model"]
+# Load both models + scalers
+model_config  = joblib.load("models/model_config.pkl")
+scaler_config = joblib.load("models/scaler_config.pkl")
+model_brand   = joblib.load("models/model_brand.pkl")
+scaler_brand  = joblib.load("models/scaler_brand.pkl")
 
-# load trained ML model
-model = joblib.load("models/fuel_efficiency_model_final.pkl")
+# Load car specs for brand+model dropdown
+car_specs = pd.read_csv("models/car_specs_final.csv")
+car_specs.columns = car_specs.columns.str.strip()
 
-# load feature columns used in training
-features = pickle.load(open("models/model_features.pkl","rb"))
+config_features = [
+    "cylinders", "displacement", "horsepower",
+    "weight", "model-year", "origin",
+    "power_to_weight", "car_age", "hp_per_cylinder"
+]
 
-rf = joblib.load("models/rf_model.pkl")
-xgb = joblib.load("models/xgb_model.pkl")
+brand_features = [
+    "Engine HP", "Engine Cylinders", "weight_est",
+    "displacement_est", "vehicle_age",
+    "power_to_weight", "hp_per_cylinder"
+]
 
 # Initialize session state
 if "username" not in st.session_state:
@@ -53,27 +60,30 @@ mode = st.radio(
 # MODE 1: Select Car Model
 # -----------------------------
 if mode == "Select Car Model":
+    brands     = sorted(car_specs["Make"].dropna().unique())
+    sel_brand  = st.selectbox("Select Car Brand", ["-- Select --"] + list(brands))
 
-    brand = st.selectbox(
-        "Select Car Brand",
-        cars["brand"].unique()
-    )
+    sel_model = None
+    if sel_brand != "-- Select --":
+        model_list = sorted(
+            car_specs[car_specs["Make"] == sel_brand]["Model"]
+            .dropna().unique()
+        )
+        sel_model = st.selectbox("Select Car Model", ["-- Select --"] + list(model_list))
 
-    models = cars[cars["brand"] == brand]["model"]
+        if sel_model != "-- Select --":
+            # Show specs of selected car
+            match = car_specs[
+                (car_specs["Make"].str.lower() == sel_brand.lower()) &
+                (car_specs["Model"].str.lower() == sel_model.lower())
+            ]
+            if not match.empty:
+                row = match.iloc[0]
+                st.info(f"HP: {row['Engine HP']} | Cylinders: {row['Engine Cylinders']}")
 
-    model_name = st.selectbox(
-        "Select Car Model",
-        models
-    )
-
-    row = cars[cars["model"] == model_name].iloc[0]
-
-    cyl = int(row["cylinders"])
-    hp = float(row["horsepower"])
-    weight = float(row["weight"])
-    acc = float(row["acceleration"])
-    year = int(row["model year"])
-    disp = st.number_input("Engine Displacement (cc)",min_value=500.0,max_value=8000.0,step=50.0)
+            # Save to session
+            st.session_state["selected_brand"] = sel_brand
+            st.session_state["selected_model"] = sel_model
 
 # -----------------------------
 # MODE 2: Manual Input
@@ -92,31 +102,110 @@ if mode == "Enter Vehicle Configuration":
 # -----------------------------
 # PREDICTION & SAVE
 # -----------------------------
-if st.button("Predict Fuel Efficiency",key="predict_btn"):
-    # Feature Engineering (same as training)
-    power_to_weight = hp / weight
-    car_age = 82 - year
-    horsepower_per_cylinder = hp / cyl
+if st.button("Predict Fuel Efficiency", key="predict_btn"):
 
-    data = pd.DataFrame([[
-        cyl,
-        disp,
-        hp,
-        weight,
-        acc,
-        year,
-        power_to_weight,
-        car_age,
-        horsepower_per_cylinder
-    ]], columns=features)
+    mpg  = None
+    kmpl = None
+
+    # ── WAY 1: Brand + Model ─────────────────────────
+    if mode == "Select Car Model":
+        sb = st.session_state.get("selected_brand")
+        sm = st.session_state.get("selected_model")
+
+        if sb and sm and sb != "-- Select --" and sm != "-- Select --":
+            match = car_specs[
+                (car_specs["Make"].str.lower() == sb.lower()) &
+                (car_specs["Model"].str.lower() == sm.lower())
+            ]
+            if not match.empty:
+                row = match.iloc[0]
+                input_df = pd.DataFrame([[
+                    row["Engine HP"],
+                    row["Engine Cylinders"],
+                    row["weight_est"],
+                    row["displacement_est"],
+                    row["vehicle_age"],
+                    row["power_to_weight"],
+                    row["hp_per_cylinder"]
+                ]], columns=brand_features)
+            
+                # Scaler ke expected columns check karo
+                expected_cols = scaler_brand.feature_names_in_
     
+                # Missing columns ko 0 se fill karo
+                for col in expected_cols:
+                    if col not in input_df.columns:
+                        input_df[col] = 0
+    
+                # Correct order mein arrange karo
+                input_df = input_df[expected_cols]
+    
+                input_scaled = scaler_brand.transform(input_df)
+                mpg = model_brand.predict(input_scaled)[0]
 
-    # ✅ Make predictions
-    rf_pred = rf.predict(data)
-    xgb_pred = xgb.predict(data)
+                input_scaled = scaler_brand.transform(input_df)
+                mpg  = model_brand.predict(input_scaled)[0]
+                kmpl = mpg * 0.4251
 
-    mpg = (0.6 * rf_pred +0.4 * xgb_pred)[0]
-    kmpl = mpg * 0.425
+                # Session save
+                st.session_state["selected_brand"] = sb
+                st.session_state["selected_model"]  = sm
+                st.session_state["hp"]     = row["Engine HP"]
+                st.session_state["cyl"]    = row["Engine Cylinders"]
+            else:
+                st.error("Car not found in database.")
+
+        else:
+            st.warning("Please select Brand and Model first.")
+
+    # ── WAY 2: Manual Config ──────────────────────────
+    elif mode == "Enter Vehicle Configuration":
+        power_to_weight      = hp / weight
+        car_age              = 2026 - year
+        horsepower_per_cyl   = hp / cyl
+
+        config_features = [
+                "cylinders", "displacement", "horsepower",
+                "weight", "model-year",
+                "power_to_weight", "car_age", "hp_per_cylinder"
+            ]
+
+        input_df = pd.DataFrame([[
+            cyl, disp, hp, weight,
+            year,
+            power_to_weight, car_age, horsepower_per_cyl
+        ]], columns=config_features)
+
+        input_scaled = scaler_config.transform(input_df)
+        mpg  = model_config.predict(input_scaled)[0]
+        kmpl = mpg * 0.4251
+
+        # Session save
+        st.session_state["cyl"]                    = cyl
+        st.session_state["disp"]                   = disp
+        st.session_state["hp"]                     = hp
+        st.session_state["weight"]                 = weight
+        st.session_state["acc"]                    = acc
+        st.session_state["year"]                   = year
+        st.session_state["power_to_weight"]        = power_to_weight
+        st.session_state["car_age"]                = car_age
+        st.session_state["horsepower_per_cylinder"]= horsepower_per_cyl
+
+    # ── Common: Save + Switch ─────────────────────────
+    if mpg is not None:
+        save_prediction(
+            st.session_state["username"],
+            st.session_state.get("cyl", 0),
+            st.session_state.get("disp", 0),
+            st.session_state.get("hp", 0),
+            st.session_state.get("weight", 0),
+            st.session_state.get("acc", 0),
+            st.session_state.get("year", 0),
+            mpg, kmpl
+        )
+        st.session_state["mpg"]  = mpg
+        st.session_state["kmpl"] = kmpl
+        st.switch_page("pages/📊Prediction.py")
 
     # save prediction once
     save_prediction(
@@ -133,7 +222,7 @@ if st.button("Predict Fuel Efficiency",key="predict_btn"):
     st.session_state["year"] = year
     st.session_state["power_to_weight"] = power_to_weight        # ✅ add this
     st.session_state["car_age"] = car_age                        # ✅ add this
-    st.session_state["horsepower_per_cylinder"] = horsepower_per_cylinder  # ✅ add this
+    st.session_state["horsepower_per_cylinder"] = horsepower_per_cyl  # ✅ add this
 
 
     st.switch_page("pages/📊Prediction.py")

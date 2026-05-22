@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 st.title("🧠 Explainable AI")
 
-rf = joblib.load("models/rf_model.pkl")
+model_config  = joblib.load("models/model_config.pkl")
+scaler_config = joblib.load("models/scaler_config.pkl")
 
 # Get prediction inputs from session
 cyl = st.session_state.get("cyl")
@@ -21,17 +22,16 @@ if cyl is None:
     st.stop()
 
 # Create feature vector
-st.subheader("Feature Contribution")
+# st.subheader("Feature Contribution")
 
-importance = rf.feature_importances_
+importance = model_config.feature_importances_
 
 features = [
     "cylinders",
     "displacement",
     "horsepower",
     "weight",
-    "acceleration",
-    "model_year",
+    "model-year",      # ✅ correct name
     "power_to_weight",
     "car_age",
     "hp_per_cylinder"
@@ -45,18 +45,21 @@ df_imp = pd.DataFrame({
 df_imp = df_imp.sort_values(by="Importance", ascending=False)
 
 # st.bar_chart(df_imp.set_index("Feature"))
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(6,3))
 
 ax.bar(df_imp["Feature"], df_imp["Importance"])
 
-ax.set_xlabel("Vehicle Configurations")
-ax.set_ylabel("Importance Value")
-ax.set_title("Feature Contribution Analysis")
+ax.set_xlabel("Vehicle Configurations", fontsize=6)
+ax.set_ylabel("Importance Value", fontsize=6)
+ax.set_title("Feature Contribution Analysis", fontsize=8)
 
-plt.xticks(rotation=45)
+plt.xticks(rotation=45, fontsize=5)
+plt.yticks(fontsize=5)
+
+ax.grid(axis='y', linestyle='--', alpha=0.7)
+# plt.tight_layout()
 
 st.pyplot(fig)
-ax.grid(axis='y', linestyle='--', alpha=0.7)
 
 
 if st.button("Go to Analytics"):
