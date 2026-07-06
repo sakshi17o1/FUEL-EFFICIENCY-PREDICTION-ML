@@ -29,16 +29,16 @@ else:
         "Model Year", "MPG", "KMPL", "Time"
     ])
 
-    # Encoding fix
-    for col in df.select_dtypes(include=['object']).columns:
+    # Fix bytes and encoding issues
+    for col in df.columns:
         df[col] = df[col].apply(
-            lambda x: x.encode('utf-8', errors='ignore').decode('utf-8')
-            if isinstance(x, str) else x
+            lambda x: x.decode('utf-8', errors='replace') if isinstance(x, bytes)
+            else (x.encode('utf-8', errors='ignore').decode('utf-8') if isinstance(x, str) else x)
         )
 
     # Numeric fix
-    df["MPG"]  = pd.to_numeric(df["MPG"],  errors='coerce')
-    df["KMPL"] = pd.to_numeric(df["KMPL"], errors='coerce')
+    df["MPG"]  = pd.to_numeric(df["MPG"],  errors='coerce').round(2)
+    df["KMPL"] = pd.to_numeric(df["KMPL"], errors='coerce').round(2)
 
     st.dataframe(df)
 

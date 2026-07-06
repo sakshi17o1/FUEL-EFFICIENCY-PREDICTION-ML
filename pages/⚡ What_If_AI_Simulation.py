@@ -20,6 +20,8 @@ st.subheader("⚡What-If AI Analysis")
 # Safety check
 if weight is None:
     st.warning("Please make a prediction first from Dashboard.")
+    if st.button("Go to Dashboard"):
+        st.switch_page("pages/🚗 Dashboard.py")
     st.stop()
 
 # Slider to adjust weight

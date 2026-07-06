@@ -139,9 +139,68 @@ if mpg:
     st.info(f"Equivalent: {kmpl:.2f} KM/L")
     if pred_source:
         st.caption(f"Prediction via: {pred_source}")
+
+    # Route Results
+    if st.session_state.get("show_map"):
+        st.divider()
+        st.subheader("🗺️ Route + Fuel Cost")
+
+        distance_km   = st.session_state.get("route_distance")
+        fuel_required = st.session_state.get("route_fuel")
+        fuel_cost     = st.session_state.get("route_cost")
+        fuel_price    = st.session_state.get("route_fuel_price")
+        duration_min  = st.session_state.get("duration_min")
+        coords1       = st.session_state.get("map_coords1")
+        coords2       = st.session_state.get("map_coords2")
+
+        col1, col2 = st.columns(2)
+        col1.metric("Distance", f"{distance_km} km")
+        col2.metric("Fuel Required", f"{fuel_required:.2f} L")
+
+        col3, col4 = st.columns(2)
+        col3.metric("Fuel Cost", f"₹ {fuel_cost:.2f}")
+        col4.metric("Fuel Price", f"₹ {fuel_price}/L")
+
+        if duration_min:
+            hours = int(duration_min // 60)
+            mins  = int(duration_min % 60)
+            if hours > 0:
+                st.info(f"🕐 Estimated travel time: {hours}h {mins}min")
+            else:
+                st.info(f"🕐 Estimated travel time: {mins} min")
+
+        st.caption(f"From: {st.session_state.get('map_origin_address')}")
+        st.caption(f"To: {st.session_state.get('map_dest_address')}")
+
+        # Map
+        import folium
+        from streamlit_folium import st_folium
+
+        st.subheader("🗺️ Route Map")
+        m = folium.Map(location=[(coords1[0]+coords2[0])/2, (coords1[1]+coords2[1])/2], zoom_start=7)
+        folium.Marker(coords1, popup="Start", icon=folium.Icon(color="green", icon="play")).add_to(m)
+        folium.Marker(coords2, popup="End",   icon=folium.Icon(color="red",   icon="stop")).add_to(m)
+        route_coords = st.session_state.get("route_coords", [coords1, coords2])
+        folium.PolyLine(route_coords, color="blue", weight=4, opacity=0.8).add_to(m)
+        st_folium(m, width=700, height=400)
+
+        st.subheader("💡 Smart Recommendation")
+        if fuel_cost > 500:
+            st.warning("💸 High cost trip. Consider carpooling.")
+        elif fuel_cost > 200:
+            st.info("🟡 Moderate cost trip.")
+        else:
+            st.success("✅ Economical trip!")
+
+        if fuel_required > 40:
+            st.warning("⛽ Long trip — Fill full tank.")
+        elif fuel_required > 20:
+            st.info("⛽ Medium trip — Check fuel level.")
+        else:
+            st.success("⛽ Short trip — Good to go!")
+
 else:
     st.warning("No prediction found. Go back and enter vehicle details.")
-
 #-------------------------------------Fuel Efficiency Recommendations-------------------------------------------#
 
 st.markdown("""
@@ -274,3 +333,4 @@ st.markdown("""
     background-attachment: fixed;
 }
 </style>""", unsafe_allow_html=True)
+
