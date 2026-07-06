@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+scikit-learn==1.6.1
+joblib
+plotly
+folium
+streamlit-folium
+geopy
+openrouteservice
+python-dotenv
+shap
+xgboost
+requests
