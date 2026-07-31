@@ -1,7 +1,7 @@
 streamlit
 pandas
 numpy
-scikit-learn
+scikit-learn==1.6.1
 joblib
 plotly
 folium
@@ -11,3 +11,7 @@ openrouteservice
 python-dotenv
 xgboost
 requests
+shap
+lime
+matplotlib
+seaborn

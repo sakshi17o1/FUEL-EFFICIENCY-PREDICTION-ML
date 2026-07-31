@@ -52,7 +52,7 @@ if mode == "Select Car Model":
                 st.info(f"HP: {row['Engine HP']} | Cylinders: {row['Engine Cylinders']}")
             st.session_state["selected_brand"] = sel_brand
             st.session_state["selected_model"] = sel_model
-
+            
     st.subheader("🗺️ Route Details (Optional)")
     origin      = st.text_input("Start Location", placeholder="e.g. Jalandhar, Punjab", key="origin_brand")
     destination = st.text_input("End Location",   placeholder="e.g. Delhi", key="dest_brand")
@@ -141,8 +141,18 @@ if st.button("Predict Fuel Efficiency", key="predict_btn"):
                 row      = match.iloc[0]
                 input_df = pd.DataFrame([[row["Engine HP"], row["Engine Cylinders"], row["weight_est"], row["displacement_est"], row["vehicle_age"], row["power_to_weight"], row["hp_per_cylinder"]]], columns=brand_features)
                 input_scaled = scaler_brand.transform(input_df)
-                mpg          = model_brand.predict(input_scaled)[0]
+                model_xgb_b = joblib.load("models/model_xgb_brand.pkl")
+                model_rf_b  = joblib.load("models/model_rf_brand.pkl")
+                scaler_b    = joblib.load("models/scaler_brand_final.pkl")
+
+                input_scaled  = scaler_b.transform(input_df)
+                xgb_pred_b   = model_xgb_b.predict(input_scaled)[0]
+                rf_pred_b    = model_rf_b.predict(input_scaled)[0]
+                mpg          = (0.60 * xgb_pred_b) + (0.40 * rf_pred_b)
                 kmpl         = mpg * 0.4251
+
+                st.session_state["prediction_mode"] = "brand"
+                st.session_state["brand_input_sc"]  = scaler_b.transform(input_df)[0].tolist()
                 st.session_state["hp"]     = row["Engine HP"]
                 st.session_state["cyl"]    = row["Engine Cylinders"]
                 st.session_state["weight"] = row["weight_est"]
@@ -169,9 +179,15 @@ if st.button("Predict Fuel Efficiency", key="predict_btn"):
         horsepower_per_cyl = hp / cyl
 
         input_df = pd.DataFrame([[cyl, disp, hp, weight, year, power_to_weight, car_age, horsepower_per_cyl]], columns=config_features)
-        input_scaled = scaler_config.transform(input_df)
-        mpg          = model_config.predict(input_scaled)[0]
-        kmpl         = mpg * 0.4251
+        model_xgb_c = joblib.load("models/model_xgb_final.pkl")
+        model_rf_c  = joblib.load("models/model_rf_final.pkl")
+        scaler_c    = joblib.load("models/scaler_final.pkl")
+
+        input_scaled = scaler_c.transform(input_df)
+        xgb_pred_c  = model_xgb_c.predict(input_scaled)[0]
+        rf_pred_c   = model_rf_c.predict(input_scaled)[0]
+        mpg         = (0.60 * xgb_pred_c) + (0.40 * rf_pred_c)
+        kmpl        = mpg * 0.4251
 
         st.session_state.update({
             "cyl": cyl, "disp": disp, "hp": hp,
@@ -195,6 +211,7 @@ if st.button("Predict Fuel Efficiency", key="predict_btn"):
         st.session_state["kmpl"] = kmpl
         st.session_state["route_mpg"]  = mpg
         st.session_state["route_kmpl"] = kmpl
+        st.session_state["prediction_mode"] = "config"
         st.switch_page("pages/📊Prediction.py")
 
 st.markdown("""
