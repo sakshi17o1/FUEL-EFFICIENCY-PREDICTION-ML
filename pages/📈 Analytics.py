@@ -124,6 +124,6 @@ st.markdown("""
 
 if st.button("Go to AI Simulation"):
 
-    st.switch_page("E:\FEP\pages\⚡ What_If_AI_Simulation.py")
+    st.switch_page("pages/⚡ What_If_AI_Simulation.py")
 
 
