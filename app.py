@@ -1,16 +1,21 @@
 import streamlit as st
 from auth import login, register
+
 # from database import create_user_table
 # create_user_table()
+
 from database import create_tables
 create_tables()
 
+
 # SESSION STATE INITIALIZATION
+
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
 if "username" not in st.session_state:
     st.session_state["username"] = None
+
 
 #-----------------------#
 
@@ -20,13 +25,16 @@ from style import load_css
 create_tables()
 load_css()
 
+
 st.set_page_config(
     page_title="Fuel Efficiency Predictor",
     page_icon="🚗",
     layout="wide"
 )
 
+
 # ---- Custom CSS for Login Page ----
+
 st.markdown("""
 <style>
 
@@ -35,7 +43,9 @@ background:url("https://image.slidesdocs.com/responsive-images/background/high-t
 color:white;
 }
 
+
 /* Login Card */
+
 .login-card{
 background: rgba(255,255,255,0.08);
 padding:35px;
@@ -44,14 +54,18 @@ backdrop-filter: blur(12px);
 box-shadow:0px 0px 20px rgba(0,0,0,0.6);
 }
 
+
 /* Title */
+
 .title{
 font-size:45px;
 font-weight:bold;
 text-align:center;
 }
 
+
 /* Buttons */
+
 .stButton>button{
 background:#0099ff;
 color:white;
@@ -64,20 +78,27 @@ width:100%;
 </style>
 """, unsafe_allow_html=True)
 
-st.set_page_config(layout="wide")
 
 # Hide Streamlit default pages navigation
+
 hide_streamlit_style = """
 <style>
+
 [data-testid="stSidebarNav"] {
     display: none;
 }
+
 </style>
 """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+st.markdown(
+    hide_streamlit_style,
+    unsafe_allow_html=True
+)
 
 
 # SESSION STATES
+
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
@@ -88,23 +109,37 @@ if "menu" not in st.session_state:
     st.session_state["menu"] = "login"
 
 
+# ============================================================
 # LOGIN SCREEN
+# ============================================================
+
 if not st.session_state["logged_in"]:
 
-# NAVBAR
 
-    col0, col2, col3 = st.columns([6,1,1])
-    
+    # ========================================================
+    # NAVBAR
+    # ========================================================
+
+    col0, col2, col3 = st.columns(
+        [6, 1, 1]
+    )
+
+
     with col0:
-        st.markdown("### 🚗 Fuel efficiency prediction")
 
-    # with col3:
-    #     if st.button("Login", key="navbar_login_btn"):
-    #         st.session_state["menu"] = "login"
-    #         st.rerun()
+        st.markdown(
+            "### 🚗 Fuel efficiency prediction"
+        )
 
+
+    # ========================================================
     # HERO SECTION
-    left, right = st.columns([2,1])
+    # ========================================================
+
+    left, right = st.columns(
+        [2, 1]
+    )
+
 
     with left:
 
@@ -114,6 +149,7 @@ if not st.session_state["logged_in"]:
         </div>
         """, unsafe_allow_html=True)
 
+
         st.markdown("""
         <div class="hero-sub">
         AI-Powered Fuel Efficiency Prediction System
@@ -121,39 +157,78 @@ if not st.session_state["logged_in"]:
         </div>
         """, unsafe_allow_html=True)
 
+
         st.markdown("""
         <div class="hero-desc">
-        About project:<br> This web application predicts the fuel efficiency of vehicles based on user input. The application features a user-friendly interface for entering vehicle specifications and displays the predicted miles per gallon (MPG) along with the equivalent kilometers per liter (KM/L). Additionally, it includes user authentication and a dashboard for tracking predictions and analytics.
+        About project:<br>
+        This web application predicts the fuel efficiency of vehicles based on user input.
+        The application features a user-friendly interface for entering vehicle specifications
+        and displays the predicted miles per gallon (MPG) along with the equivalent
+        kilometers per liter (KM/L). Additionally, it includes user authentication and a
+        dashboard for tracking predictions and analytics.
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
 
-        if st.button("Get Started"):
-            st.session_state["menu"] = "login"
-
+    # ========================================================
+    # LOGIN / REGISTER CARD
+    # ========================================================
 
     with right:
 
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="login-card">',
+            unsafe_allow_html=True
+        )
 
-        st.subheader("Login to Continue")
+
+        st.subheader(
+            "Login to Continue"
+        )
+
 
         b1, b2 = st.columns(2)
 
+
         with b1:
-            if st.button("Login", key="login_menu_btn"):
+
+            if st.button(
+                "Login",
+                key="login_menu_btn"
+            ):
+
                 st.session_state["menu"] = "login"
 
+
         with b2:
-            if st.button("Register", key="register_menu_btn"):
+
+            if st.button(
+                "Register",
+                key="register_menu_btn"
+            ):
+
                 st.session_state["menu"] = "register"
 
+
+        # ====================================================
+        # LOGIN
+        # ====================================================
+
         if st.session_state["menu"] == "login":
+
             login()
 
+
+        # ====================================================
+        # REGISTER
+        # ====================================================
+
         if st.session_state["menu"] == "register":
+
             register()
 
-        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
