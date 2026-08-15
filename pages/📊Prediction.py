@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 from database import save_prediction,create_tables
 import pandas as pd
@@ -6,55 +5,11 @@ import numpy as np
 import pickle
 import joblib
 from sklearn.ensemble import RandomForestRegressor
+
 import plotly.graph_objects as go
-import requests 
 
 create_tables()
 
-def get_nearby_fuel_stations(lat, lon, radius_m=5000, limit=5):
-    """Fetch nearby fuel stations using Geoapify Places API."""
-
-    GEOAPIFY_API_KEY = os.getenv("GEOAPIFY_API_KEY")
-    url = (
-        "https://api.geoapify.com/v2/places?"
-        f"categories=service.vehicle.fuel"
-        f"&filter=circle:{lon},{lat},{radius_m}"
-        f"&bias=proximity:{lon},{lat}"
-        f"&limit={limit}"
-        f"&apiKey={GEOAPIFY_API_KEY}"
-    )
-
-    try:
-        response = requests.get(url, timeout=20)
-        response.raise_for_status()
-
-        data = response.json()
-        st.write("Status Code:", response.status_code)
-        
-
-        stations = []
-
-        for feature in data.get("features", []):
-
-            props = feature.get("properties", {})
-
-            stations.append({
-                "name": props.get("name", "Unnamed Fuel Station"),
-                "brand": props.get("brand", ""),
-                "lat": props.get("lat"),
-                "lon": props.get("lon"),
-                "distance_km": round(
-                    props.get("distance", 0) / 1000,
-                    2
-                )
-            })
-
-        return stations
-
-    except Exception as e:
-        st.warning(f"Could not fetch nearby fuel stations: {e}")
-        return []
-    
 # Load models
 model_config  = joblib.load("models/model_config.pkl")
 scaler_config = joblib.load("models/scaler_config.pkl")
@@ -225,39 +180,9 @@ if mpg:
         m = folium.Map(location=[(coords1[0]+coords2[0])/2, (coords1[1]+coords2[1])/2], zoom_start=7)
         folium.Marker(coords1, popup="Start", icon=folium.Icon(color="green", icon="play")).add_to(m)
         folium.Marker(coords2, popup="End",   icon=folium.Icon(color="red",   icon="stop")).add_to(m)
-        # Nearest Fuel Stations
-        fuel_stations = get_nearby_fuel_stations(coords1[0], coords1[1])
-
-        for s in fuel_stations:
-            folium.Marker(
-                [s["lat"], s["lon"]],
-                popup=f"{s['name']} ({s['distance_km']} km)",
-                tooltip=s["name"],
-                icon=folium.Icon(color="orange", icon="tint")
-            ).add_to(m)
-    # ------------------------------------------------------
-
-    # Route Line
         route_coords = st.session_state.get("route_coords", [coords1, coords2])
         folium.PolyLine(route_coords, color="blue", weight=4, opacity=0.8).add_to(m)
-        
         st_folium(m, width=700, height=400)
-
-    # -------------------- NEW ADDITION --------------------
-        if fuel_stations:
-            st.subheader("⛽ Nearest Fuel Stations")
-
-            for s in fuel_stations:
-                station_text = (
-                    f"**{s['name']}**"
-                    f"{' — ' + s['brand'] if s['brand'] else ''}"
-                    f" — {s['distance_km']} km away"
-                    )
-                st.write(station_text)
-            else:
-                st.info("No nearby fuel stations found.")
-    # ------------------------------------------------------
-
 
         st.subheader("💡 Smart Recommendation")
         if fuel_cost > 500:
@@ -395,7 +320,7 @@ if confidence is not None:
         value=f"{confidence*100:.1f}%"
     )
 
-#----------------------------------------------------switch page ----------------------------------------------------------#
+#--------------------------------------------switch page --------------------------------------------------#
 
 if st.button("Go to Explainable AI"):
     st.switch_page("pages/🧠 Explainable_AI.py")
@@ -408,4 +333,3 @@ st.markdown("""
     background-attachment: fixed;
 }
 </style>""", unsafe_allow_html=True)
-
