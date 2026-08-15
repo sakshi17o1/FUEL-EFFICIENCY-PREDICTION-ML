@@ -21,6 +21,11 @@ Visualisation of prediction result
 
 ![alt text](visual.png)
 
+Route-Based prediction result
+![alt text](route+cost.png)
+
+![alt text](route_map.png)
+
 🧠 Explainable AI
 
 ![alt text](xai.png)
