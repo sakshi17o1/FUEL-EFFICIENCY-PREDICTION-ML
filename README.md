@@ -7,7 +7,6 @@ FLOWCHART OF THE PROJECT
 
 How to Run: streamlit run app.py
 
-
 USER INTERFACE OF WEB APP 
 
 ![alt text](user_interface1.png)
