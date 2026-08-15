@@ -3,7 +3,7 @@ Fuel Efficiency Prediction Project
 
 FLOWCHART OF THE PROJECT
 
-![alt text](fl.tiff)
+![alt text](FL.png)
 
 How to Run: streamlit run app.py
 
