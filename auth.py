@@ -15,13 +15,14 @@ def login():
         unsafe_allow_html=True
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # LOGIN FORM
-    # ========================================================
+    # --------------------------------------------------------
 
     with st.form(
         "login_form",
-        clear_on_submit=False
+        clear_on_submit=False,
+        enter_to_submit=True
     ):
 
         username = st.text_input(
@@ -36,87 +37,132 @@ def login():
         )
 
         login_pressed = st.form_submit_button(
-            "Login"
+            "Login",
+            key="auth_login_btn"
         )
 
 
     # ========================================================
-    # USERNAME -> ENTER -> PASSWORD
-    #
-    # Password -> ENTER -> FORM SUBMISSION
-    #
-    # The second part is handled naturally by st.form().
+    # ENTER KEY HANDLING
     # ========================================================
 
     components.html(
         """
         <script>
 
-        function setupLoginKeyboard() {
+        (function() {
 
-            try {
+            function setupLoginKeyboard() {
 
-                const doc = window.parent.document;
+                try {
 
-                const usernameInput =
-                    doc.querySelector(
-                        'input[aria-label="Username"]'
-                    );
-
-                const passwordInput =
-                    doc.querySelector(
-                        'input[aria-label="Password"]'
-                    );
+                    const doc = window.parent.document;
 
 
-                /* ============================================
-                   USERNAME -> ENTER -> PASSWORD
-                   ============================================ */
+                    // EXACT USERNAME INPUT
+                    const usernameInput =
+                        doc.querySelector(
+                            '.st-key-login_username input'
+                        );
 
-                if (
-                    usernameInput &&
-                    passwordInput &&
-                    !usernameInput.dataset.enterToPassword
-                ) {
 
-                    usernameInput.addEventListener(
-                        "keydown",
-                        function(event) {
+                    // EXACT PASSWORD INPUT
+                    const passwordInput =
+                        doc.querySelector(
+                            '.st-key-login_password input'
+                        );
 
-                            if (event.key === "Enter") {
 
-                                event.preventDefault();
-                                event.stopPropagation();
+                    // EXACT LOGIN SUBMIT BUTTON
+                    const loginButton =
+                        doc.querySelector(
+                            '.st-key-auth_login_btn button'
+                        );
 
-                                passwordInput.focus();
+
+                    // ==========================================
+                    // USERNAME -> ENTER -> PASSWORD
+                    // ==========================================
+
+                    if (
+                        usernameInput &&
+                        passwordInput &&
+                        !usernameInput.dataset.enterNavigation
+                    ) {
+
+                        usernameInput.addEventListener(
+                            "keydown",
+                            function(event) {
+
+                                if (event.key === "Enter") {
+
+                                    event.preventDefault();
+                                    event.stopPropagation();
+
+                                    passwordInput.focus();
+
+                                }
 
                             }
+                        );
 
-                        }
+                        usernameInput.dataset.enterNavigation =
+                            "true";
+                    }
+
+
+                    // ==========================================
+                    // PASSWORD -> ENTER -> LOGIN
+                    // ==========================================
+
+                    if (
+                        passwordInput &&
+                        loginButton &&
+                        !passwordInput.dataset.enterNavigation
+                    ) {
+
+                        passwordInput.addEventListener(
+                            "keydown",
+                            function(event) {
+
+                                if (event.key === "Enter") {
+
+                                    event.preventDefault();
+                                    event.stopPropagation();
+
+                                    loginButton.click();
+
+                                }
+
+                            }
+                        );
+
+                        passwordInput.dataset.enterNavigation =
+                            "true";
+                    }
+
+                }
+
+                catch(error) {
+
+                    console.log(
+                        "Login keyboard error:",
+                        error
                     );
 
-                    usernameInput.dataset.enterToPassword =
-                        "true";
                 }
 
             }
 
-            catch(error) {
 
-                console.log(
-                    "Login keyboard setup:",
-                    error
-                );
+            // Streamlit renders widgets asynchronously
+            setTimeout(setupLoginKeyboard, 200);
+            setTimeout(setupLoginKeyboard, 500);
+            setTimeout(setupLoginKeyboard, 1000);
+            setTimeout(setupLoginKeyboard, 2000);
+            setTimeout(setupLoginKeyboard, 3000);
 
-            }
-
-        }
-
-
-        setTimeout(setupLoginKeyboard, 300);
-        setTimeout(setupLoginKeyboard, 800);
-        setTimeout(setupLoginKeyboard, 1500);
-        setTimeout(setupLoginKeyboard, 2500);
+        })();
 
         </script>
         """,
@@ -177,13 +223,14 @@ def register():
     )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # REGISTER FORM
-    # ========================================================
+    # --------------------------------------------------------
 
     with st.form(
         "register_form",
-        clear_on_submit=False
+        clear_on_submit=False,
+        enter_to_submit=True
     ):
 
         user = st.text_input(
@@ -198,85 +245,132 @@ def register():
         )
 
         register_pressed = st.form_submit_button(
-            "Register"
+            "Register",
+            key="auth_register_btn"
         )
 
 
     # ========================================================
-    # USERNAME -> ENTER -> PASSWORD
-    #
-    # Password -> ENTER -> FORM SUBMISSION
+    # ENTER KEY HANDLING
     # ========================================================
 
     components.html(
         """
         <script>
 
-        function setupRegisterKeyboard() {
+        (function() {
 
-            try {
+            function setupRegisterKeyboard() {
 
-                const doc = window.parent.document;
+                try {
 
-                const usernameInput =
-                    doc.querySelector(
-                        'input[aria-label="Username"]'
-                    );
-
-                const passwordInput =
-                    doc.querySelector(
-                        'input[aria-label="Password"]'
-                    );
+                    const doc = window.parent.document;
 
 
-                /* ============================================
-                   USERNAME -> ENTER -> PASSWORD
-                   ============================================ */
+                    // EXACT REGISTER USERNAME INPUT
+                    const usernameInput =
+                        doc.querySelector(
+                            '.st-key-register_username input'
+                        );
 
-                if (
-                    usernameInput &&
-                    passwordInput &&
-                    !usernameInput.dataset.registerEnter
-                ) {
 
-                    usernameInput.addEventListener(
-                        "keydown",
-                        function(event) {
+                    // EXACT REGISTER PASSWORD INPUT
+                    const passwordInput =
+                        doc.querySelector(
+                            '.st-key-register_password input'
+                        );
 
-                            if (event.key === "Enter") {
 
-                                event.preventDefault();
-                                event.stopPropagation();
+                    // EXACT REGISTER SUBMIT BUTTON
+                    const registerButton =
+                        doc.querySelector(
+                            '.st-key-auth_register_btn button'
+                        );
 
-                                passwordInput.focus();
+
+                    // ==========================================
+                    // USERNAME -> ENTER -> PASSWORD
+                    // ==========================================
+
+                    if (
+                        usernameInput &&
+                        passwordInput &&
+                        !usernameInput.dataset.enterNavigation
+                    ) {
+
+                        usernameInput.addEventListener(
+                            "keydown",
+                            function(event) {
+
+                                if (event.key === "Enter") {
+
+                                    event.preventDefault();
+                                    event.stopPropagation();
+
+                                    passwordInput.focus();
+
+                                }
 
                             }
+                        );
 
-                        }
+                        usernameInput.dataset.enterNavigation =
+                            "true";
+                    }
+
+
+                    // ==========================================
+                    // PASSWORD -> ENTER -> REGISTER
+                    // ==========================================
+
+                    if (
+                        passwordInput &&
+                        registerButton &&
+                        !passwordInput.dataset.enterNavigation
+                    ) {
+
+                        passwordInput.addEventListener(
+                            "keydown",
+                            function(event) {
+
+                                if (event.key === "Enter") {
+
+                                    event.preventDefault();
+                                    event.stopPropagation();
+
+                                    registerButton.click();
+
+                                }
+
+                            }
+                        );
+
+                        passwordInput.dataset.enterNavigation =
+                            "true";
+                    }
+
+                }
+
+                catch(error) {
+
+                    console.log(
+                        "Register keyboard error:",
+                        error
                     );
 
-                    usernameInput.dataset.registerEnter =
-                        "true";
                 }
 
             }
 
-            catch(error) {
 
-                console.log(
-                    "Register keyboard setup:",
-                    error
-                );
+            // Streamlit renders widgets asynchronously
+            setTimeout(setupRegisterKeyboard, 200);
+            setTimeout(setupRegisterKeyboard, 500);
+            setTimeout(setupRegisterKeyboard, 1000);
+            setTimeout(setupRegisterKeyboard, 2000);
+            setTimeout(setupRegisterKeyboard, 3000);
 
-            }
-
-        }
-
-
-        setTimeout(setupRegisterKeyboard, 300);
-        setTimeout(setupRegisterKeyboard, 800);
-        setTimeout(setupRegisterKeyboard, 1500);
-        setTimeout(setupRegisterKeyboard, 2500);
+        })();
 
         </script>
         """,
